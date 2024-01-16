@@ -2,21 +2,29 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Таймер с расчетом зарплаты и конвертацией валют</title>
     <style>
-        #timer-container {
+        body {
             font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        #timer-container {
             text-align: center;
             margin-top: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+            margin: 0 auto;
         }
 
-        #timer, #gross-amount, #vat-amount, #income-tax-amount, #net-amount, #texting {
+        #timer, #gross-amount, #vat-amount, #income-tax-amount, #net-amount, #texting, #net-amount-usd, #net-amount-rub {
             font-size: 1.5em;
-            margin: 10px 0;
-        }
-
-        #net-amount-usd, #net-amount-rub {
-            font-size: 1.0em;
             margin: 10px 0;
         }
 
@@ -27,8 +35,9 @@
             cursor: pointer;
         }
 
-        input[type="number"] {
-            padding: 5px;
+        input[type="number"], input[type="range"] {
+            width: 100%;
+            padding: 10px;
             font-size: 1em;
         }
 
@@ -36,19 +45,35 @@
             width: 80%;
             margin: 10px 0;
         }
+
+        /* Responsive CSS for tablets */
+        @media (max-width: 768px) {
+            #timer-container {
+                max-width: 80%;
+            }
+        }
+
+        /* Responsive CSS for mobile phones */
+        @media (max-width: 480px) {
+            #timer-container {
+                max-width: 90%;
+            }
+        }
     </style>
 </head>
 <body>
     <div id="timer-container">
         <div id="texting">Таймер от ставки <input type="number" id="hourlyRateInput" step="0.01" value="27.7"> zł</div>
         <input type="range" id="timeSlider" min="1" max="100" step="0.01" value="27.7">
+        <div id="hour-text">Часы: <input type="number" id="hourInput" min="0" value="1"></div>
+        <input type="range" id="hourSlider" min="0" max="24" value="1">
         <div id="timer">01:00:00</div>
         <div id="gross-amount">Валовая: 27.70 zł</div>
         <div id="vat-amount">VAT (23%): 6.37 zł</div>
         <div id="income-tax-amount">Подоходный налог (19%): 4.05 zł</div>
-        <div id="net-amount">Чистая: 17,28 zł</div>
+        <div id="net-amount">Чистая: 17.28 zł</div>
         <div id="net-amount-usd">Чистая (USD): $ 4.32</div>
-        <div id="net-amount-rub">Чистая (RUB): 380,16 ₽</div>
+        <div id="net-amount-rub">Чистая (RUB): 380.16 ₽</div>
         <button id="startButton">Старт</button>
         <button id="stopButton">Стоп</button>
         <button id="resetButton">Сброс</button>
@@ -67,6 +92,8 @@
         let resetButton = document.getElementById('resetButton');
         let hourlyRateInput = document.getElementById('hourlyRateInput');
         let timeSlider = document.getElementById('timeSlider');
+        let hourInput = document.getElementById('hourInput');
+        let hourSlider = document.getElementById('hourSlider');
 
         // Variables for calculations
         let seconds = 3600, interval = null;
@@ -78,7 +105,7 @@
 
         // Function to calculate amounts
         function calculateAmounts() {
-            let gross = (hourlyRate / 3600) * seconds;
+            let gross = (hourlyRate / 3600) * seconds * (hourInput.value || 1);
             let vat = gross * vatRate;
             let incomeTax = gross * incomeTaxRate;
             let net = gross - vat - incomeTax;
@@ -116,6 +143,17 @@
             updateInitialValues();
         });
 
+        // Update hours and recalculate values when the input changes
+        hourInput.addEventListener('input', function () {
+            updateValues();
+        });
+
+        // Update hours and recalculate values when the slider changes
+        hourSlider.addEventListener('input', function () {
+            hourInput.value = hourSlider.value;
+            updateValues();
+        });
+
         // Start button event listener
         startButton.onclick = function () {
             if (interval !== null) return;
@@ -139,7 +177,7 @@
         resetButton.onclick = function () {
             clearInterval(interval);
             interval = null;
-            seconds = 0;
+            seconds = 3600; // Reset to 01:00:00
             timer.innerText = '01:00:00';
             updateValues();
         };
